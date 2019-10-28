@@ -8,6 +8,12 @@ import editdistance
 from DataLoader import DataLoader, Batch
 from Model import Model, DecoderType
 from SamplePreprocessor import preprocess
+import os
+
+import pdb
+
+document_directory = '../../text-segmentation/out/'
+# document_directory = '../data/cropped_historical/'
 
 
 class FilePaths:
@@ -15,7 +21,28 @@ class FilePaths:
 	fnCharList = '../model/charList.txt'
 	fnAccuracy = '../model/accuracy.txt'
 	fnTrain = '../data/'
-	fnInfer = '../data/test.png'
+	# fnInfer = '../data/test.png'
+	# fnInfer = []
+	fnInfer = {}
+	# for file in os.listdir('../data/words3'):
+	for document in os.listdir(document_directory):
+		fnInfer[document] = []
+
+		for word in os.listdir(document_directory + document + '/words'):
+			path_to_img = document_directory + document + "/words/" + word
+			img = cv2.imread(path_to_img)
+			height, width = img.shape[:2]
+			
+			if width <= 258:
+				fnInfer[document].append(word)
+		
+		fnInfer[document].sort()
+
+	# for file in os.listdir(document_directory):
+	# 	fnInfer.append(os.path.join(document_directory, file))
+	
+	# fnInfer.sort()
+
 	fnCorpus = '../data/corpus.txt'
 
 
@@ -96,6 +123,8 @@ def infer(model, fnImg):
 	print('Recognized:', '"' + recognized[0] + '"')
 	print('Probability:', probability[0])
 
+	# return recognized[0]
+
 
 def main():
 	"main function"
@@ -138,7 +167,16 @@ def main():
 	else:
 		print(open(FilePaths.fnAccuracy).read())
 		model = Model(open(FilePaths.fnCharList).read(), decoderType, mustRestore=True, dump=args.dump)
-		infer(model, FilePaths.fnInfer)
+		# FilePaths.fnInfer
+		for i in FilePaths.fnInfer:
+			# print('Processing:', i)
+			# infer(model, i)
+			f = open("../out/" + i + ".txt", "w+")
+			for img in FilePaths.fnInfer[i]:
+				print("Processing", document_directory + i + "/words/" + img)
+				# infer(model, FilePaths.fnInfer)
+				f.write(infer(model, document_directory + i + "/words/" +  img) + " ")
+			f.close()
 
 
 if __name__ == '__main__':
