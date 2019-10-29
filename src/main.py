@@ -1,5 +1,6 @@
 from __future__ import division
 from __future__ import print_function
+from datetime import date
 
 import sys
 import argparse
@@ -26,15 +27,18 @@ class FilePaths:
 	fnInfer = {}
 	# for file in os.listdir('../data/words3'):
 	for document in os.listdir(document_directory):
+		print("processing ", document)
 		fnInfer[document] = []
+
 
 		for word in os.listdir(document_directory + document + '/words'):
 			path_to_img = document_directory + document + "/words/" + word
 			img = cv2.imread(path_to_img)
+			print(word)
 			height, width = img.shape[:2]
 			
-			if width <= 258:
-				fnInfer[document].append(word)
+			# if width <= 128 and height <= 31:
+			fnInfer[document].append(word)
 		
 		fnInfer[document].sort()
 
@@ -123,7 +127,7 @@ def infer(model, fnImg):
 	print('Recognized:', '"' + recognized[0] + '"')
 	print('Probability:', probability[0])
 
-	# return recognized[0]
+	return recognized[0]
 
 
 def main():
@@ -165,6 +169,9 @@ def main():
 
 	# infer text on test image
 	else:
+		error = "error processing image. continuing..."
+		errors = []
+
 		print(open(FilePaths.fnAccuracy).read())
 		model = Model(open(FilePaths.fnCharList).read(), decoderType, mustRestore=True, dump=args.dump)
 		# FilePaths.fnInfer
@@ -175,8 +182,17 @@ def main():
 			for img in FilePaths.fnInfer[i]:
 				print("Processing", document_directory + i + "/words/" + img)
 				# infer(model, FilePaths.fnInfer)
-				f.write(infer(model, document_directory + i + "/words/" +  img) + " ")
+				try:
+					f.write(infer(model, document_directory + i + "/words/" +  img) + " ")
+				except:
+					print(error)
+					errors.append(i + "/words/" + img)
+
 			f.close()
+
+			with open("../out/" + str(date.today()) + "_errors.txt", 'w') as f:
+				for item in errors:
+					f.write("%s\n" % item)
 
 
 if __name__ == '__main__':
